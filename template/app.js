@@ -31,7 +31,22 @@ var lightMode = document.querySelector('.light-mode');
 var darkMode = document.querySelector('.dark-mode');
 lightMode.style.display = 'none';
 
-darkMode.addEventListener('click', function(event){
+function parseQuery(queryString) {
+    var query = {};
+    var pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
+    for (var i = 0; i < pairs.length; i++) {
+        var pair = pairs[i].split('=');
+        query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+    }
+    return query;
+}
+
+darkMode.addEventListener('click', darkModeFunc)
+function darkModeFunc(){
+    let query = document.location.search.substr(1);
+    
+    window.history.replaceState({}, '', '/?' + 'dark_mode=on')
+
     lightMode.style.display = 'block';
     darkMode.style.display = 'none';
     document.body.style.background = '#464444';
@@ -52,9 +67,11 @@ darkMode.addEventListener('click', function(event){
     for(const img of document.querySelectorAll('.control-panel img')){
         img.style.filter = 'invert(1)';
     }
-})
+}
 
 lightMode.addEventListener('click', function(event){
+    window.history.replaceState({}, '', '/?' + 'dark_mode=off')
+
     lightMode.style.display = 'none';
     darkMode.style.display = 'block';
     document.body.style.background = '#eee';
@@ -88,17 +105,18 @@ for(const btn of selectBtn ){
         var userToId = btn.getAttribute("data-userToId");
         var userId = btn.getAttribute("data-userId");
         var params = "userId=" + userId + "&userToId=" + userToId;
+        let query = document.location.search.substr(1);
+        var queryObj = parseQuery(query);
 
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '/select/chat', true);
         xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
 
         xhr.onload = function(){
-            if(this.status == 200){
+            if(this.status == 200){                
                 var SMSinfo = JSON.parse(this.responseText); 
                 var output = '';
                 var outputUser = '';
-                console.log(SMSinfo);
 
                 outputUser +=   '<img data-id="'+ SMSinfo[0].id +'" src="/upload/'+ SMSinfo[0].image +'">'+
                                 '<div class="per-info">'+
@@ -139,8 +157,28 @@ for(const btn of selectBtn ){
                 }
                 document.querySelector('.header-chat').innerHTML = outputUser;
                 document.querySelector('.chat-content').innerHTML = output;
-                if(chatContent)
-                    chatContent.scrollTo(0,chatContent.scrollHeight);
+                if(queryObj.hasOwnProperty('dark_mode') ){
+                    if( queryObj.dark_mode == 'on' ){
+                        for(const text of document.querySelectorAll('.chat-me .chat-text'))
+                        { text.style.background = '#38385c' }
+                        for(const text of document.querySelectorAll('.chat-me .chat-arr'))
+                        { text.style.background = '#38385c' }
+                        for(const text of document.querySelectorAll('.chat-to .chat-text'))
+                        { text.style.background = '#202c44' }
+                        for(const text of document.querySelectorAll('.chat-to .chat-arr'))
+                        { text.style.background = '#202c44' }
+                    } else {
+                        for(const text of document.querySelectorAll('.chat-me .chat-text'))
+                        { text.style.background = '#eee' }
+                        for(const text of document.querySelectorAll('.chat-me .chat-arr'))
+                        { text.style.background = '#eee' }
+                        for(const text of document.querySelectorAll('.chat-to .chat-text'))
+                        { text.style.background = '#e9effb' }
+                        for(const text of document.querySelectorAll('.chat-to .chat-arr'))
+                        { text.style.background = '#e9effb' }
+                    }
+                }
+                chatContent.scrollTo(0,chatContent.scrollHeight);
             } else {
                 console.log("Page Not Found")
             }
@@ -150,6 +188,16 @@ for(const btn of selectBtn ){
 }
 
 var sendBtn = document.getElementById("send-message-form");
+
+// Check Function
+function checkQuery( query, path, path1, path2, arg){
+    if(path1 != null) query = query.replace("&"+path+"="+arg, "");
+    if(path2 != null) query = query.replace(path+"="+arg+"&", "");
+    if(path2 != null) query = query.replace(path+"="+arg, "");
+    return query
+}
+// !Check Function
+
 sendBtn.addEventListener('click', sendChat);
 function sendChat(e)
 {
@@ -158,57 +206,54 @@ function sendChat(e)
     var userId = sendBtn.getAttribute("data-userId");
     var messageVal = document.getElementById('send-input').value;
     var params = "userId=" + userId + "&userToId=" + userToId + "&text=" + messageVal;
+    let query = document.location.search.substr(1);
+    var queryObj = parseQuery(query);
+
+    // check area
+    query = checkQuery(query, "userId", query.match(/&userId/g), query.match(/userId/g), queryObj.userId)
+    query = checkQuery(query, "userToId", query.match(/&userToId/g), query.match(/userToId/g), queryObj.userToId)
+    query = checkQuery(query, "text", query.match(/&text/g), query.match(/text/g), queryObj.text)
+    // check area
+    
+    let queryRequest = query.length == 0 ? '' + params : query + '&' + params; 
+
+    window.history.replaceState({}, '', '/?' + queryRequest)
 
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/send/chat', true);
+    xhr.open('GET', '/send/chat?'+queryRequest, true);
     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
 
     xhr.onload = function(){
         if(this.status == 200){
-            var SMSinfo = JSON.parse(this.responseText); 
-            var output = '';
-            var outputUser = '';
-            console.log(SMSinfo);
-
-            for(const i in SMSinfo[1]){
-                if( userId == SMSinfo[1][i].user_id ){
-                    output += '<div class="chat-me">'+
-                                    '<div class="chat-cart">'+
-                                        '<div class="chat-text">'+
-                                            '<p>' + SMSinfo[1][i].text + '</p>'+
-                                            '<div class="chat-time">'+
-                                                '<span>' + SMSinfo[1][i].time + '</span>'+
-                                            '</div>'+
-                                            '<div class="chat-arr"></div>'+
-                                        '</div>'+
-                                        '<img src="/upload/no-image.png" alt="">'+
-                                    '</div>'+
-                                '</div>';
-                } else {
-                    output += '<div class="chat-to">'+
-                                    '<div class="chat-cart">'+
-                                        '<div class="chat-text">'+
-                                            '<p>' + SMSinfo[1][i].text + '</p>'+
-                                            '<div class="chat-time">'+
-                                                '<span>' + SMSinfo[1][i].time + '</span>'+
-                                            '</div>'+
-                                            '<div class="chat-arr"></div>'+
-                                        '</div>'+
-                                        '<img src="/upload/no-image.png" alt="">'+
-                                    '</div>'+
-                                '</div>';
-                }
-            
+            if(this.responseText == 'error'){
+                document.getElementById('send-input').value = '';
             }
-            
-            document.getElementById('send-input').value = '';
-            document.querySelector('.header-chat').innerHTML = outputUser;
-            document.querySelector('.chat-content').innerHTML = output;
-            if(chatContent)
-                chatContent.scrollTo(0,chatContent.scrollHeight);
+
+            if(queryObj.hasOwnProperty('dark_mode') ){
+                if( queryObj.dark_mode == 'on' ){
+                    for(const text of document.querySelectorAll('.chat-me .chat-text'))
+                    { text.style.background = '#38385c' }
+                    for(const text of document.querySelectorAll('.chat-me .chat-arr'))
+                    { text.style.background = '#38385c' }
+                    for(const text of document.querySelectorAll('.chat-to .chat-text'))
+                    { text.style.background = '#202c44' }
+                    for(const text of document.querySelectorAll('.chat-to .chat-arr'))
+                    { text.style.background = '#202c44' }
+                } else {
+                    for(const text of document.querySelectorAll('.chat-me .chat-text'))
+                    { text.style.background = '#eee' }
+                    for(const text of document.querySelectorAll('.chat-me .chat-arr'))
+                    { text.style.background = '#eee' }
+                    for(const text of document.querySelectorAll('.chat-to .chat-text'))
+                    { text.style.background = '#e9effb' }
+                    for(const text of document.querySelectorAll('.chat-to .chat-arr'))
+                    { text.style.background = '#e9effb' }
+                }
+            }
+            chatContent.scrollTo(0,chatContent.scrollHeight);
         } else {
             console.log("Page Not Found")
         }
     }
-    xhr.send(params);
+    xhr.send();
 } 

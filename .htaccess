@@ -7,4 +7,3 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
 RewriteRule ^(.*) index.php
-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

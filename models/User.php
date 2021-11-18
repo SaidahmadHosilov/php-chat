@@ -26,11 +26,16 @@ class User
     {
         $db = Db::getConnection();
         $arr = [];
-
-        $sql = "SELECT * FROM sms WHERE user_id = $userId AND user_to_id = $userToId
+        if( $userId == $userToId ){
+            $sql = "SELECT * FROM sms 
+                WHERE user_id = $userId AND user_to_id = $userToId ORDER BY time";
+        } else {
+            $sql = "SELECT * FROM sms WHERE user_id = $userId AND user_to_id = $userToId
                 UNION ALL 
                 SELECT * FROM sms WHERE user_id = $userToId AND user_to_id = $userId 
                 ORDER BY time";
+        }
+        
         $result = $db->query($sql);
         $result->setFetchMode(PDO::FETCH_ASSOC);
         $arr = $result->fetchAll();

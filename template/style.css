@@ -411,10 +411,22 @@ body{
     }
 }
 
+@media screen and (max-width: 600px){
+    body{
+        padding: 0;
+    }
+    .container{
+        width: 100%;
+    }
+}
+
 @media screen and (max-width: 320px){
     .header-chat{
         flex-direction: column;
         align-items: center;
+    }
+    .per-info{
+        text-align: center;
     }
     .header-chat img{
         margin-right: 0;

@@ -12,6 +12,7 @@ return array(
     'register' => 'user/register',
     // Access system
 
+    '^insert/chat' => 'site/insertChat',
     '^send/chat' => 'site/sendChat',
     '^select/chat' => 'site/selectChat',
     '' => 'site/index',

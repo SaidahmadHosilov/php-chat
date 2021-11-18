@@ -5,8 +5,8 @@ return array(
     'dbname' => 'php_chat',
     'user' => 'root',
     'password' => '',
-    // 'host' => 'sql102.epizy.com',
-    // 'dbname' => 'epiz_30312112_saidahmadphpminiblog',
-    // 'user' => 'epiz_30312112',
-    // 'password' => 'FqJCER9Sly5s',
+    // 'host' => 'sql311.epizy.com',
+    // 'dbname' => 'epiz_30378072_phpchat',
+    // 'user' => 'epiz_30378072',
+    // 'password' => 'IeA2hEmBqpe1EAI',
 );
