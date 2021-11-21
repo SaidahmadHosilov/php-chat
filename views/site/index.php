@@ -14,7 +14,7 @@
                     <input type="search" name="people-search" placeholder="Search..." id="search-input">
                 </div>
             </form>
-            <div class="people">
+            <div class="people" id="people-list-box">
                 <ul>
                     <?php foreach( $users as $person ): ?>
                         <li>
@@ -215,7 +215,7 @@
 <script src="/template/app.js"></script>
 <script>
     <?php if($darkMode == 'on'): ?>
-        console.log(document.querySelector('.dark-mode').click());
+        document.querySelector('.dark-mode').click();
     <?php endif; ?>
 </script>
 <!-- Footer -->

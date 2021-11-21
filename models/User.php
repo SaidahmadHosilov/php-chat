@@ -2,6 +2,16 @@
 
 class User
 {
+    public static function searchPeople($name)
+    {
+        $db = Db::getConnection();
+        $sql = "SELECT * FROM users WHERE name LIKE '%$name%'";
+        $result = $db->query($sql);
+        $result->setFetchMode(PDO::FETCH_ASSOC);
+
+        return $result->fetchAll();
+    }
+
     public static function getUserImage($userId)
     {
         $db = Db::getConnection();
@@ -68,12 +78,35 @@ class User
     public static function getUsers()
     {
         $db = Db::getConnection();
+        $userId = $_SESSION['user'];
+        $sql = "SELECT user_id as id FROM sms WHERE user_id = $userId OR user_to_id = $userId 
+                GROUP BY user_id
+                UNION
+                SELECT user_to_id FROM sms WHERE user_id = $userId OR user_to_id = $userId 
+                GROUP BY user_to_id";
+        $ides = $db->query($sql);
+        $ides->setFetchMode(PDO::FETCH_ASSOC);
+        $ides = $ides->fetchAll();
 
-        $sql = "SELECT * FROM users";
-        $result = $db->query($sql);
-        $result->setFetchMode(PDO::FETCH_ASSOC);
+        $stmt = $db->query("SELECT * FROM users");
+        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        // $stmt = $stmt->fetchAll();
+        $i = 0;
+        $arr = array();
         
-        return $result->fetchAll();
+        while($row = $stmt->fetch()){
+            for($k = 0; $k < count($ides); $k++ ){
+                if( $ides[$k]['id'] == $row['id'] ){
+                    $arr[$i]['id'] = $row['id'];
+                    $arr[$i]['name'] = $row['name'];
+                    $arr[$i]['phone'] = $row['phone'];
+                    $arr[$i]['image'] = $row['image'];
+                }
+            }
+            $i++;
+        }
+
+        return $arr;
     }
 
     public static function register( $name, $number, $password, $image )

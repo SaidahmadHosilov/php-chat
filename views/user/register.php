@@ -21,7 +21,7 @@
                 <!-- <div class="checkboxy">
                     <input name="cecky" id="checky" value="1" type="checkbox" /><label class="terms">I accept the terms of use</label>
                 </div> -->
-                <a href="login">Avval ro'yxatdan o'tgan bo'lsangiz bu yerni bosing</a>
+                <a href="login">Avval ro'yxatdan o'tgan bo'lsangiz <a style="color:blue; font-weight:bold" href="/login">bu yerni</a> bosing</a>
                 <button name="submit" type="submit" id="submit">SIGN UP</button>
             </div>
         </form>

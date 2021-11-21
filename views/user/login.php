@@ -22,7 +22,7 @@
                     ?>
                 </p>
 
-                <a href="/register">Yangi bo'lsangiz bu yerni bosing</a>
+                <a>Yangi bo'lsangiz <a style="color:blue; font-weight:bold" href="/register">bu yerni</a>  bosing</a>
                 <button type="submit" name="submit" id="submit" href="#">SIGN IN</button>
             </div>
         </form>

@@ -1,15 +1,19 @@
 <?php
 
 return array(
+    // Debounce
+    '^user/userSearch' => 'search/userSearch',
+    // Debounce
+
     // Profile
-    'profile/delete/([0-9]+)' => 'user/profileDelete/$1',
-    'profile/edit/([0-9]+)' => 'user/profileEdit/$1',
+    '^profile/delete/([0-9]+)' => 'user/profileDelete/$1',
+    '^profile/edit/([0-9]+)' => 'user/profileEdit/$1',
     // Profile
 
     // Access system
-    'logout' => 'user/logout',
-    'login' => 'user/login',
-    'register' => 'user/register',
+    '^logout' => 'user/logout',
+    '^login' => 'user/login',
+    '^register' => 'user/register',
     // Access system
 
     '^insert/chat' => 'site/insertChat',
