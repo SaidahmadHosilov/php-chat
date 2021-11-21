@@ -67,7 +67,7 @@
                     </a>
                 </div>
             </div>
-            <div class="chat-content" id="chat-content">
+            <div class="chat-content" id="chat-content" data-id="<?=$_SESSION['user']?>">
 
                 <!-- <div class="chat-to">
                     <div class="chat-cart">
@@ -107,100 +107,111 @@
 
     var channel = pusher.subscribe('demo_pusher');
     channel.bind('chat-content', function(data) {
-        var userInfo = data['message'].current_user;
-        var userToInfo = data['message'].user_to_info;
-        var allSMS = data['message'].all_sms;
-        var outputUser = '';
+        var userInfo = data['message'].current_user; // Saidahmad
+        var userToInfo = data['message'].user_to_info;  // Kamoliddin
+        var allSMS = data['message'].all_sms;   // SMS user_id = S, user_to_id = K
         var output = '';
+        var output2 = '';
 
-        outputUser +=   '<img data-id="'+ userToInfo.id +'" src="/upload/'+ userToInfo.image +'">'+
-                            '<div class="per-info">'+
-                                '<div class="name">'+ userToInfo.name +'</div>'+
-                                '<div class="status">'+ userToInfo.phone +'</div>'+
-                            '</div>';
-
-        for( const sms of allSMS ){
-            if( userInfo.id == sms.user_id ){
-                output += '<div class="chat-me">'+
-                                '<div class="chat-cart">'+
-                                    '<div class="chat-text">'+
-                                        '<p>' + sms.text + '</p>'+
-                                        '<div class="chat-time">'+
-                                            '<span>' + sms.time + '</span>'+
+        if( userInfo.id == <?=$_SESSION['user']?> ){
+            var spId = $('.header-chat img').attr('data-id');
+            if( spId == userToInfo.id ){
+                output = '';
+                for( const sms of allSMS ){
+                    if( spId == sms.user_to_id ){
+                        output += '<div class="chat-me">'+
+                                        '<div class="chat-cart">'+
+                                            '<div class="chat-text">'+
+                                                '<p>' + sms.text + '</p>'+
+                                                '<div class="chat-time">'+
+                                                    '<span>' + sms.time + '</span>'+
+                                                '</div>'+
+                                                '<div class="chat-arr"></div>'+
+                                            '</div>'+
+                                            '<img src="/upload/'+ userInfo.image +'" alt="">'+
                                         '</div>'+
-                                        '<div class="chat-arr"></div>'+
-                                    '</div>'+
-                                    '<img src="/upload/'+ userInfo.image +'" alt="">'+
-                                '</div>'+
-                            '</div>';
-            } else {
-                output += '<div class="chat-to">'+
-                                '<div class="chat-cart">'+
-                                    '<div class="chat-text">'+
-                                        '<p>' + sms.text + '</p>'+
-                                        '<div class="chat-time">'+
-                                            '<span>' + sms.time + '</span>'+
+                                    '</div>';
+                    } else {
+                        output += '<div class="chat-to">'+
+                                        '<div class="chat-cart">'+
+                                            '<div class="chat-text">'+
+                                                '<p>' + sms.text + '</p>'+
+                                                '<div class="chat-time">'+
+                                                    '<span>' + sms.time + '</span>'+
+                                                '</div>'+
+                                                '<div class="chat-arr"></div>'+
+                                            '</div>'+
+                                            '<img src="/upload/'+ userToInfo.image +'" alt="">'+
                                         '</div>'+
-                                        '<div class="chat-arr"></div>'+
-                                    '</div>'+
-                                    '<img src="/upload/'+ userToInfo.image +'" alt="">'+
-                                '</div>'+
-                            '</div>';
+                                    '</div>';
+                    }
+                }
             }
+            $('#chat-content').html(output);
+            $('#send-input').val("");
         }
 
-        $('#send-input').val("");
-        $('.header-chat').html(outputUser); 
-        $('#chat-content').html(output); 
-});
-</script>
-
-
-<!-- <script type="text/javascript">
-    // selectChat
-    // $(document).ready(function(){
-    //     $('.select-chat-user').each(function(){
-    //         $(this).on('click', function(ev){
-    //             $.ajax({
-    //                 url: "/select/chat",
-    //                 method: 'GET',
-    //                 data:{
-    //                     fromUser: <?=$_SESSION['user']?>,
-    //                     toUser: $(this).attr('data-usertoid'),
-    //                     // message: $('#send-input').val(),
-    //                 },
-    //                 dataType: 'text',
-    //                 success: function(data){
-    //                     data = jQuery.parseJSON(data)
-    //                     $(".header-chat").html(data[0]);
-    //                     $(".chat-content").html(data[1]);
-    //                 }
-    //             })
-    //             ev.preventDefault();
-    //         })
-    //     })
-    // });
-    // // addChat
-    // $(document).ready(function(){
-    //     $('#send-message-form').on('click', function(ev){
-    //         $.ajax({
-    //             url: "/insert/chat",
-    //             method: 'GET',
-    //             data:{
-    //                 fromUser: <?=$_SESSION['user']?>,
-    //                 toUser: $('.header-chat img').attr('data-id'),
-    //                 message: $('#send-input').val(),
-    //             },
-    //             dataType: 'text',
-    //             success: function(data){
-    //                 $("#send-input").val("");
-    //             }
-    //         })
-    //         ev.preventDefault();
-    //     })
-    // });
-</script> -->
- 
+        if(  userToInfo.id == <?=$_SESSION['user']?> ){
+            let query = document.location.search.substr(1);
+            var queryObj = parseQuery(query);
+            var spId2 = $('.header-chat img').attr('data-id');
+            if( spId2 == userInfo.id ){
+                output2 = '';
+                for( const sms of allSMS ){
+                    if( spId2 == sms.user_id ){
+                        output2 += '<div class="chat-to">'+
+                                        '<div class="chat-cart">'+
+                                            '<div class="chat-text">'+
+                                                '<p>' + sms.text + '</p>'+
+                                                '<div class="chat-time">'+
+                                                    '<span>' + sms.time + '</span>'+
+                                                '</div>'+
+                                                '<div class="chat-arr"></div>'+
+                                            '</div>'+
+                                            '<img src="/upload/'+ userInfo.image +'" alt="">'+
+                                        '</div>'+
+                                    '</div>';
+                    } else {
+                        output2 += '<div class="chat-me">'+
+                                        '<div class="chat-cart">'+
+                                            '<div class="chat-text">'+
+                                                '<p>' + sms.text + '</p>'+
+                                                '<div class="chat-time">'+
+                                                    '<span>' + sms.time + '</span>'+
+                                                '</div>'+
+                                                '<div class="chat-arr"></div>'+
+                                            '</div>'+
+                                            '<img src="/upload/'+ userToInfo.image +'" alt="">'+
+                                        '</div>'+
+                                    '</div>';
+                    }
+                }
+            }
+            $('#chat-content').html(output2);
+            if(queryObj.hasOwnProperty('dark_mode') ){
+                    if( queryObj.dark_mode == 'on' ){
+                        for(const text of document.querySelectorAll('.chat-me .chat-text'))
+                        { text.style.background = '#38385c' }
+                        for(const text of document.querySelectorAll('.chat-me .chat-arr'))
+                        { text.style.background = '#38385c' }
+                        for(const text of document.querySelectorAll('.chat-to .chat-text'))
+                        { text.style.background = '#202c44' }
+                        for(const text of document.querySelectorAll('.chat-to .chat-arr'))
+                        { text.style.background = '#202c44' }
+                    } else {
+                        for(const text of document.querySelectorAll('.chat-me .chat-text'))
+                        { text.style.background = '#eee' }
+                        for(const text of document.querySelectorAll('.chat-me .chat-arr'))
+                        { text.style.background = '#eee' }
+                        for(const text of document.querySelectorAll('.chat-to .chat-text'))
+                        { text.style.background = '#e9effb' }
+                        for(const text of document.querySelectorAll('.chat-to .chat-arr'))
+                        { text.style.background = '#e9effb' }
+                    }
+                }
+        }
+    });
+</script> 
 <script src="/template/app.js"></script>
 <script>
     <?php if($darkMode == 'on'): ?>
