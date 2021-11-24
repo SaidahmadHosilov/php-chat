@@ -62,7 +62,7 @@ class User
         $result->setFetchMode(PDO::FETCH_ASSOC);
 
         return $result->fetch();
-    }
+    } 
 
     public static function insertDataToChat($userId, $userToId, $message, $images)
     {
