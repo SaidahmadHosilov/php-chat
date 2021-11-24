@@ -11,17 +11,17 @@ class SiteController
         } else {
             $user = User::getUser($_SESSION['user']);
         }
+
         $users = User::getUsers();
-
+        
         require_once( ROOT . '/views/site/index.php' );
-
         return true;
     }
 
     public function actionSelectChat()
     {
-        $userId = $_POST['userId'] ?? '';
-        $userToId = $_POST['userToId'] ?? '';
+        $userId = $_GET['userId'] ?? '';
+        $userToId = $_GET['userToId'] ?? '';
         $arr = [];
 
         $currentUserImage = User::getUserImage($userId);
@@ -39,16 +39,21 @@ class SiteController
 
     public function actionSendChat()
     {
-        if(!isset($_GET['userToId']) || $_GET['userToId'] == "null"){
+        if(!isset($_POST['userToId']) || $_POST['userToId'] == "null"){
             echo 'error';
             exit;
         }
 
-        $userId = $_GET['userId'];
-        $userToId = $_GET['userToId'];
-        $text = $_GET['text'];
+        $userId = $_POST['userId'] ?? '';
+        $userToId = $_POST['userToId'] ?? '';
+        $images = $_POST['images'] ?? '';
+        $text = $_POST['text'] ?? '';
 
-        User::insertDataToChat($userId, $userToId, $text);
+        // $text = preg_replace('/(%2B)+/i', '+', $text);
+        // $text = preg_replace('/(%2F)+/i', '/', $text);
+        // $text = preg_replace('/(%27)+/i', '\'', $text);
+
+        User::insertDataToChat($userId, $userToId, $text, $images);
 
         $currentUserImage = User::getUserImage($userId);
         $userToInfo = User::getUserToInfo($userToId);
@@ -69,5 +74,20 @@ class SiteController
 
         $pusher->trigger('demo_pusher', 'chat-content', $data);
         exit;
+    }
+
+    public function actionDeleteChat()
+    {
+        $currentId = $_GET['sms_id'] ?? '';
+        $toId = $_GET['toId'] ?? '';
+        $currentTime = $_GET['time'] ?? '';
+        User::deleteChat($currentId, $currentTime);
+
+        $currentUserImage = User::getUserImage($currentId);
+        $userToInfo = User::getUserToInfo($toId);
+        $getAllSMS = User::getAllSMS($currentId, $toId);
+
+        echo json_encode([$currentUserImage, $getAllSMS, $userToInfo]);
+        exit;       
     }
 }

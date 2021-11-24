@@ -4,7 +4,7 @@ class SearchController
 {
     public function actionUserSearch()
     {
-        $name = $_POST['name'] ?? '';
+        $name = $_GET['name'] ?? '';
         if($name != ''){
             $people = User::searchPeople($name);
         } else {

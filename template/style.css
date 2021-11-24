@@ -197,11 +197,21 @@ body{
     width: 100%;
     overflow-y: scroll;
     height: 100%;
-    /* display: flex; */
-    /* flex-direction: column-reverse; */
+    display: flex;
+    flex-direction: column-reverse;
 }
 
 /* chat me design */
+.delete-sms{
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
+
+.delete-sms > img{
+    width: 15px;
+    height: 15px;    
+}
 
 .chat-me{
     width: 100%;
@@ -218,6 +228,7 @@ body{
 }
 
 .chat-me .chat-cart .chat-text {
+    position: relative;
     background-color: rgb(233, 239, 251);
     padding: 20px 20px 10px 20px;
     border-radius: 5px;
@@ -246,7 +257,7 @@ body{
     color: rgb(103, 104, 103);
 }
 
-.chat-me .chat-cart img{
+.chat-me .chat-cart > img{
     width: 45px;
     height: 45px;
     border-radius: 50%;
@@ -317,6 +328,7 @@ body{
 /* width */
 ::-webkit-scrollbar {
     width: 5px;
+    height: 5px;
 }
 
 /* Track */
@@ -365,14 +377,51 @@ body{
     cursor: pointer;
 }
 
-.send-message img{
+#send-message-form > img{
     width: 15px;
     height: 15px;
 }
 
+.share-image{
+    position: absolute;
+    width: 20px;
+    height: 100%;
+    top: 0;
+    right: 5px;
+    cursor: pointer;
+}
+#share-image{
+    display: none;
+}
+
+.for-pic{
+    max-height: 100px;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.images-chat > img{
+    max-width: 100%!important;
+    max-height: 400px!important;
+    object-fit: cover;
+}
+
+.for-pic:hover {
+    overflow-x: scroll;
+}
+
+.for-pic img{
+    margin-right: 3px;
+    object-fit: cover;
+    width: 100px;
+    height: 100px;
+}
 .send-message #send-input{
+    min-height: 30px;
     width: 100%;
-    padding: 10px 15px 10px 40px;
+    padding: 10px 30px 5px 40px;
     border-radius: 3px;
     border: 1px solid rgb(184, 178, 178);
     outline: none;

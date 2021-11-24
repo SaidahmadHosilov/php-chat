@@ -2,6 +2,48 @@
 
 class User
 {
+    public static function isOnlineUser($id)
+    {
+        $db = Db::getConnection();
+        $first = $db->query("SELECT user_id FROM is_online WHERE user_id = '$id'");
+        $first->setFetchMode(PDO::FETCH_ASSOC);
+        $first = $first->fetch();
+        // $date = date('Y-m-d H:i:s');
+        if( $first ){
+            $sql = "UPDATE is_online SET last_time = 'online' WHERE user_id = $id";
+        } else {
+            $sql = "INSERT INTO is_online(user_id, last_time) VALUES('$id', 'online')";
+        }
+        $db->query($sql);
+
+        return true;
+    }
+
+    public static function isNotOnlineUser($id)
+    {
+        $db = Db::getConnection();
+        $first = $db->query("SELECT user_id FROM is_online WHERE user_id = '$id'");
+        $first->setFetchMode(PDO::FETCH_ASSOC);
+        $first = $first->fetch();
+        // $date = date('Y-m-d H:i:s');
+        if( $first ){
+            $sql = "UPDATE is_online SET last_time = 'offline' WHERE user_id = $id";
+        } else {
+            $sql = "INSERT INTO is_online(user_id, last_time) VALUES('$id', 'offline')";
+        }
+        $db->query($sql);
+
+        return true;
+    }
+
+    public static function deleteChat($id, $time)
+    {
+        $db = Db::getConnection();
+        $sql = "DELETE FROM sms WHERE user_id = $id AND time = '$time'";
+        $db->query($sql);
+        return true;
+    }
+
     public static function searchPeople($name)
     {
         $db = Db::getConnection();
@@ -22,14 +64,20 @@ class User
         return $result->fetch();
     }
 
-    public static function insertDataToChat($userId, $userToId, $message)
+    public static function insertDataToChat($userId, $userToId, $message, $images)
     {
         $db = Db::getConnection();
         $date = date('Y-m-d H:i:s');
-
-        $sql = "INSERT INTO sms( user_id, user_to_id, text, time)
-        VALUES ( $userId, $userToId, '$message', '$date' )";
-        $db->query($sql);
+        $images = base64_encode($images);
+        $sql = "INSERT INTO sms( user_id, user_to_id, text, images, time)
+        VALUES ( :uid, :utoid, :msg, :img, :date )";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(':uid', $userId, PDO::PARAM_INT);
+        $stmt->bindParam(':utoid', $userToId, PDO::PARAM_INT);
+        $stmt->bindParam(':msg', $message, PDO::PARAM_STR);
+        $stmt->bindParam(':img', $images, PDO::PARAM_STR);
+        $stmt->bindParam(':date', $date, PDO::PARAM_STR);
+        $stmt->execute();
     }
 
     public static function getAllSMS($userId, $userToId)
@@ -38,17 +86,29 @@ class User
         $arr = [];
         if( $userId == $userToId ){
             $sql = "SELECT * FROM sms 
-                WHERE user_id = $userId AND user_to_id = $userToId ORDER BY time";
+                WHERE user_id = $userId AND user_to_id = $userToId ORDER BY time DESC";
         } else {
             $sql = "SELECT * FROM sms WHERE user_id = $userId AND user_to_id = $userToId
                 UNION ALL 
                 SELECT * FROM sms WHERE user_id = $userToId AND user_to_id = $userId 
-                ORDER BY time";
+                ORDER BY time DESC";
         }
         
         $result = $db->query($sql);
         $result->setFetchMode(PDO::FETCH_ASSOC);
-        $arr = $result->fetchAll();
+        $arr = [];
+        $i = 0;
+
+        while($row = $result->fetch()){
+            $arr[$i]['id'] = $row['id'];
+            $arr[$i]['user_id'] = $row['user_id'];
+            $arr[$i]['user_to_id'] = $row['user_to_id'];
+            $arr[$i]['text'] = $row['text'];
+            $arr[$i]['images'] = base64_decode($row['images']);
+            $arr[$i]['time'] = $row['time'];
+            $i++;
+        }
+        
         
         return $arr;
     }

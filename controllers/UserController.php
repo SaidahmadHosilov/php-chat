@@ -141,10 +141,14 @@ class UserController
     public function actionLogout()
     {
         if(isset($_SESSION['user'])){
+            User::isNotOnlineUser($_SESSION['user']);
             unset($_SESSION['user']);
+            header("Location: /login");
+            exit;
         }
 
-        header("Location: /login");
+        echo 'Nimadir chotta nito! :(';
+        exit;
     }
 
     public function actionProfileView($user_id)
@@ -258,5 +262,28 @@ class UserController
 
         header("Location: /register");
         exit;
+    }
+
+    public function actionUploadFile()
+    {
+        if(!empty($_FILES))
+        {
+            if(is_uploaded_file($_FILES['file']['tmp_name']))
+            {
+                $ext = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
+                $allow_ext = array('jpg', 'png', 'svg');
+                if(in_array($ext, $allow_ext))
+                {
+                    $_source_path = $_FILES['file']['tmp_name'];
+                    $target_path = 'upload/' . $_FILES['file']['name'];
+                    if(move_uploaded_file($_source_path, $target_path))
+                    {
+                        echo '<img src="/' . $target_path . '" class="chat-image-style">';
+                        exit;
+                    }
+                    //echo $ext;
+                }
+            }
+        }
     }
 }

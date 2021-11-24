@@ -16,6 +16,8 @@ return array(
     '^register' => 'user/register',
     // Access system
 
+    '^image/send' => 'user/uploadFile',
+    '^delete/chat' => 'site/deleteChat',
     '^insert/chat' => 'site/insertChat',
     '^send/chat' => 'site/sendChat',
     '^select/chat' => 'site/selectChat',

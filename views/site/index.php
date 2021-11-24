@@ -18,18 +18,16 @@
                 <ul>
                     <?php foreach( $users as $person ): ?>
                         <li>
-                            <!-- <form action="#" method="POST"> -->
-                                <a class="select-chat-user" 
-                                data-userToId="<?=$person['id']?>" data-userId="<?=$_SESSION['user']?>">
-                                    <div class="person-box">
-                                        <img src="/upload/<?=$person['image']?>" alt="">
-                                        <div class="per-info">
-                                            <div class="name"><?=$person['name']?></div>
-                                            <div class="status"> <div class="online-class"></div> online</div>
-                                        </div>
+                            <a class="select-chat-user" 
+                            data-userToId="<?=$person['id']?>" data-userId="<?=$_SESSION['user']?>">
+                                <div class="person-box">
+                                    <img src="/upload/<?=$person['image']?>" alt="">
+                                    <div class="per-info">
+                                        <div class="name"><?=$person['name']?></div>
+                                        <div class="status"> <div class="online-class"></div> online</div>
                                     </div>
-                                </a>
-                            <!-- </form> -->
+                                </div>
+                            </a>
                         </li>
                     <?php endforeach; ?>
                 </ul>
@@ -44,11 +42,6 @@
                                 <div class="name"><?=$user['name']?></div>
                             </div>
                     <?php endif; ?>
-                    <!-- <img src="/upload/no-image.png">
-                        <div class="per-info">
-                            <div class="name">Otabek</div>
-                            <div class="status">Last seen recently</div>
-                        </div> -->
                 </div>
                 <div class="control-panel">
                     <a>
@@ -69,27 +62,21 @@
             </div>
             <div class="chat-content" id="chat-content" data-id="<?=$_SESSION['user']?>">
 
-                <!-- <div class="chat-to">
-                    <div class="chat-cart">
-                        <div class="chat-text">
-                            <p>Hi Aiden, how are you? How is the project coming along?</p>
-                            <div class="chat-time">
-                                <span>10:10 AM, Today</span>
-                            </div>
-                            <div class="chat-arr"></div>
-                        </div>
-                        <img src="/upload/no-image.png" alt="">
-                    </div>
-                </div>-->
             </div>
 
             <form class="send-message" id="form-ajax-send">
+                <div class="for-pic"></div>
                 <div class="send-container">
                     <button id="send-message-form" 
                         data-userId="<?=$_SESSION['user']?>" name="submit" class="send-img">
                         <img src="/template/images/sent.svg" class="send-icon">
                     </button>
-                    <input type="text" name="text" placeholder="Enter text here..." id="send-input">
+                    <form id="uploadImage" method="post" enctype="multipart/form-data">
+                        <label for="share-image"><img src="/template/images/share-image.svg" class="share-image"></label>
+                        <input type="file" name="image-upload" id="share-image" accept=".jpg, .png, .svg" />
+                    </form>
+                    
+                    <textarea type="text" name="text" placeholder="Enter text here..." id="send-input"></textarea>
                 </div>
             </form>
         </div>
@@ -97,7 +84,30 @@
 
 <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script>
+<script type="text/javascript">
+    $(document).ready(function(){
+        $('#share-image').on('change', function(){
+            var file_data = $('#share-image').prop('files')[0];   
+            var form_data = new FormData();                  
+            form_data.append('file', file_data);
+            $.ajax(
+            {
+                type: "POST",
+                dataType: 'text',  // <-- what to expect back from the PHP script, if anything
+                cache: false,
+                contentType: false,
+                processData: false,
+                url: '/image/send',
+                data: form_data,
+                success: function(info)
+                {
+                    $(".for-pic").append(info)
+                }
+            });
+        });
+    })
+    
+
     // Enable pusher logging - don't include this in production
     Pusher.logToConsole = true;
 
@@ -106,6 +116,7 @@
     });
 
     var channel = pusher.subscribe('demo_pusher');
+
     channel.bind('chat-content', function(data) {
         var userInfo = data['message'].current_user; // Saidahmad
         var userToInfo = data['message'].user_to_info;  // Kamoliddin
@@ -121,7 +132,9 @@
                     if( spId == sms.user_to_id ){
                         output += '<div class="chat-me">'+
                                         '<div class="chat-cart">'+
-                                            '<div class="chat-text">'+
+                                            '<div class="chat-text" data-id="'+sms.user_id+'">'+
+                                                '<a href="/delete/chat" class="delete-sms"><img src="/template/images/delete-sms.svg"></a>'+
+                                                '<div class="images-chat">'+ sms.images +'</div>'+
                                                 '<p>' + sms.text + '</p>'+
                                                 '<div class="chat-time">'+
                                                     '<span>' + sms.time + '</span>'+
@@ -135,6 +148,7 @@
                         output += '<div class="chat-to">'+
                                         '<div class="chat-cart">'+
                                             '<div class="chat-text">'+
+                                                '<div class="images-chat">'+ sms.images +'</div>'+
                                                 '<p>' + sms.text + '</p>'+
                                                 '<div class="chat-time">'+
                                                     '<span>' + sms.time + '</span>'+
@@ -149,6 +163,9 @@
             }
             $('#chat-content').html(output);
             $('#send-input').val("");
+            for(const deleteBtn of document.querySelectorAll('.delete-sms')){
+                deleteBtn.addEventListener('click', deleteChat);
+            }
         }
 
         if(  userToInfo.id == <?=$_SESSION['user']?> ){
@@ -162,6 +179,7 @@
                         output2 += '<div class="chat-to">'+
                                         '<div class="chat-cart">'+
                                             '<div class="chat-text">'+
+                                                '<div class="images-chat">'+ sms.images +'</div>'+
                                                 '<p>' + sms.text + '</p>'+
                                                 '<div class="chat-time">'+
                                                     '<span>' + sms.time + '</span>'+
@@ -174,7 +192,9 @@
                     } else {
                         output2 += '<div class="chat-me">'+
                                         '<div class="chat-cart">'+
-                                            '<div class="chat-text">'+
+                                            '<div class="chat-text" data-id="'+sms.user_to_id+'">'+
+                                                '<a href="/delete/chat" class="delete-sms"><img src="/template/images/delete-sms.svg"></a>'+
+                                                '<div class="images-chat">'+ sms.images +'</div>'+
                                                 '<p>' + sms.text + '</p>'+
                                                 '<div class="chat-time">'+
                                                     '<span>' + sms.time + '</span>'+

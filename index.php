@@ -18,5 +18,9 @@ require_once(ROOT . '/vendor/autoload.php');
 
 // 3. ROUTER ga murojaat
 
+if(isset($_SESSION['user'])){
+    User::isOnlineUser($_SESSION['user']);
+}
+
 $router = new Router();
 $router->run();
