@@ -67,6 +67,9 @@ function darkModeFunc(){
     for(const img of document.querySelectorAll('.control-panel img')){
         img.style.filter = 'invert(1)';
     }
+    for(const img of document.querySelectorAll('.select-group-chat > img')){
+        img.style.filter = 'invert(1)';
+    }
 }
 
 lightMode.addEventListener('click', function(event){
@@ -92,11 +95,106 @@ lightMode.addEventListener('click', function(event){
     for(const img of document.querySelectorAll('.control-panel img')){
         img.style.filter = 'invert(0)';
     }
+    for(const img of document.querySelectorAll('.select-group-chat > img')){
+        img.style.filter = 'invert(0)';
+    }
 })
 // set up mode
 
-// select and send mail with ajax
+// select and send mail with ajax select-group-chat
+// var selectGroupBtn = document.querySelectorAll(".select-chat-user");
 var selectBtn = document.querySelectorAll(".select-chat-user");
+
+$(document).ready(function(){
+    $(".select-group-chat").on('click', function(event){
+        var grId = this.getAttribute('data-grId');
+        var userId = this.getAttribute('data-userId');
+        $.ajax(
+        {
+            type: "GET",
+            dataType: 'text',  // <-- what to expect back from the PHP script, if anything
+            cache: false,
+            contentType: false,
+            processData: false,
+            url: '/group/select',
+            data: 'gr_id='+grId+'&user_id='+userId,
+            success: function(info)
+            {
+                var info = JSON.parse(info);
+                var outputGroup = '';
+                var output = '';
+                var query = window.location.search.substr(1)
+                var queryObj = parseQuery(query);
+
+                if( info[3] == info[0].admin ) {
+                    outputGroup += '<img data-name="group" data-group-users="'+ info[1] +'" data-id="'+ info[0].id +'" src="/upload/'+ info[0].image +'">'+
+                                    '<div class="per-info">'+
+                                        '<div class="name">'+ info[0].name +'</div>'+
+                                        '<div class="status">'+ info[1].length +' people |'+
+                                        '<a class="delete-group-btn" href="/delete/group/'+ info[0].id +'" onclick="return confirm(\'Are you sure to delete the group?\')">Delete</a>'+
+                                        '</div>'+
+                                    '</div>';    
+                } else {
+                    outputGroup += '<img data-name="group" data-group-users="'+ info[1] +'" data-id="'+ info[0].id +'" src="/upload/'+ info[0].image +'">'+
+                                    '<div class="per-info">'+
+                                        '<div class="name">'+ info[0].name +'</div>'+
+                                        '<div class="status">'+ info[1].length +' people |'+
+                                        '</div>'+
+                                    '</div>';
+                }
+                
+
+                for(const i in info[2]){
+                    if( info[2][i].user_id == info[3] ){
+                        output += '<div class="chat-me">'+
+                                        '<div class="chat-cart">'+
+                                            '<div class="chat-text" data-id="'+info[2][i].user_id+'">'+
+                                                '<a href="/delete/grChat" class="delete-sms-gr"><img src="/template/images/delete-sms.svg"></a>'+
+                                                '<div class="images-chat">'+ info[2][i].image +'</div>'+
+                                                '<p>' + info[2][i].sms + '</p>'+
+                                                '<div class="chat-time">'+
+                                                    '<span>' + (info[2][i].time) + '</span>'+
+                                                '</div>'+
+                                                '<div class="chat-arr"></div>'+
+                                            '</div>'+
+                                            '<img src="/upload/' + info[2][i].uimage + '" alt="">'+
+                                        '</div>'+
+                                    '</div>';
+                    } else {
+                        output += '<div class="chat-to">'+
+                                        '<div class="chat-cart">'+
+                                            '<div class="chat-text" data-id="'+info[2][i].user_id+'">'+
+                                                '<div class="images-chat">'+ info[2][i].image +'</div>'+
+                                                '<p>' + info[2][i].sms + '</p>'+
+                                                '<div class="chat-time">'+
+                                                    '<span>' + (info[2][i].time) + '</span>'+
+                                                '</div>'+
+                                                '<div class="chat-arr"></div>'+
+                                            '</div>'+
+                                            '<img src="/upload/' + info[2][i].uimage + '" alt="">'+
+                                        '</div>'+
+                                    '</div>';
+                    }
+                
+                }
+
+                document.querySelector('.header-chat').innerHTML = outputGroup;
+                document.querySelector('.chat-content').innerHTML = output;
+
+                for(const deleteBtn of document.querySelectorAll('.delete-sms-gr')){
+                    deleteBtn.addEventListener('click', deleteGrChat);
+                }
+
+                if( queryObj.hasOwnProperty('dark_mode') ){
+                    if(queryObj.dark_mode == 'on'){
+                        darkMode.click();
+                    }
+                }
+            }
+        });
+    })
+})
+
 function selectChat(e)
 {
     e.preventDefault();
@@ -161,23 +259,7 @@ function selectChat(e)
             document.querySelector('.chat-content').innerHTML = output;
             if(queryObj.hasOwnProperty('dark_mode') ){
                 if( queryObj.dark_mode == 'on' ){
-                    for(const text of document.querySelectorAll('.chat-me .chat-text'))
-                    { text.style.background = '#38385c' }
-                    for(const text of document.querySelectorAll('.chat-me .chat-arr'))
-                    { text.style.background = '#38385c' }
-                    for(const text of document.querySelectorAll('.chat-to .chat-text'))
-                    { text.style.background = '#202c44' }
-                    for(const text of document.querySelectorAll('.chat-to .chat-arr'))
-                    { text.style.background = '#202c44' }
-                } else {
-                    for(const text of document.querySelectorAll('.chat-me .chat-text'))
-                    { text.style.background = '#eee' }
-                    for(const text of document.querySelectorAll('.chat-me .chat-arr'))
-                    { text.style.background = '#eee' }
-                    for(const text of document.querySelectorAll('.chat-to .chat-text'))
-                    { text.style.background = '#e9effb' }
-                    for(const text of document.querySelectorAll('.chat-to .chat-arr'))
-                    { text.style.background = '#e9effb' }
+                    darkMode.click();
                 }
             }
             for(const deleteBtn of document.querySelectorAll('.delete-sms')){
@@ -209,72 +291,67 @@ function sendChat(e)
 {
     e.preventDefault();
     var userToId = document.querySelector(".header-chat img").getAttribute("data-id");
+    var isGroup = document.querySelector(".header-chat img").getAttribute("data-name");
+    var grUsers = document.querySelector(".header-chat img").getAttribute("data-group-users");
     var userId = sendBtn.getAttribute("data-userId");
     var images = document.querySelector(".for-pic").innerHTML;
     var messageVal = encodeURIComponent(document.getElementById('send-input').value);
-
-    let query = document.location.search.substr(1);
-    var queryObj = parseQuery(query);
-    
-    if(images.length == 0 || images == undefined ){
-        var params = "userId=" + userId + "&userToId=" + userToId + "&text=" + messageVal;
-        if(queryObj.hasOwnProperty('images')){
-            let url = new URL(location.href);
-            url.searchParams.delete('images');
-            query = url.search.substr(1);
-        }
-    } else {
-        var params = "userId=" + userId + "&userToId=" + userToId + "&text=" + messageVal+"&images=" + images;
-        query = checkQuery(query, "images", query.match(/&images/g), query.match(/images/g), queryObj.images)
-    }
-
-    // check area
-    query = checkQuery(query, "userId", query.match(/&userId/g), query.match(/userId/g), queryObj.userId)
-    query = checkQuery(query, "userToId", query.match(/&userToId/g), query.match(/userToId/g), queryObj.userToId)
-    query = checkQuery(query, "text", query.match(/&text/g), query.match(/text/g), queryObj.text)
-    // check area
-    
-    let queryRequest = query.length == 0 ? '' + params : query + '&' + params; 
-
-    window.history.replaceState({}, '', '/?' + queryRequest)
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/send/chat', true);
-    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
-
-    xhr.onload = function(){
-        if(this.status == 200){
-            if(this.responseText == 'error'){
-                document.getElementById('send-input').value = '';
+    if( !(messageVal == '' && images == '') ){
+        let query = document.location.search.substr(1);
+        var queryObj = parseQuery(query);
+        
+        if(images.length == 0 || images == undefined ){
+            if(isGroup != undefined){
+                var params = "userId=" + userId + "&gr_id=" + userToId + "&text=" + messageVal+"&is_group="+1+"&gr_users="+grUsers;
+            }else {
+                var params = "userId=" + userId + "&userToId=" + userToId + "&text=" + messageVal+"&is_group="+0;
             }
-
-            document.querySelector('.for-pic').innerHTML = '';
-            if(queryObj.hasOwnProperty('dark_mode') ){
-                if( queryObj.dark_mode == 'on' ){
-                    for(const text of document.querySelectorAll('.chat-me .chat-text'))
-                    { text.style.background = '#38385c' }
-                    for(const text of document.querySelectorAll('.chat-me .chat-arr'))
-                    { text.style.background = '#38385c' }
-                    for(const text of document.querySelectorAll('.chat-to .chat-text'))
-                    { text.style.background = '#202c44' }
-                    for(const text of document.querySelectorAll('.chat-to .chat-arr'))
-                    { text.style.background = '#202c44' }
-                } else {
-                    for(const text of document.querySelectorAll('.chat-me .chat-text'))
-                    { text.style.background = '#eee' }
-                    for(const text of document.querySelectorAll('.chat-me .chat-arr'))
-                    { text.style.background = '#eee' }
-                    for(const text of document.querySelectorAll('.chat-to .chat-text'))
-                    { text.style.background = '#e9effb' }
-                    for(const text of document.querySelectorAll('.chat-to .chat-arr'))
-                    { text.style.background = '#e9effb' }
-                }
+            if(queryObj.hasOwnProperty('images')){
+                let url = new URL(location.href);
+                url.searchParams.delete('images');
+                query = url.search.substr(1);
             }
         } else {
-            console.log("Page Not Found")
+            if(isGroup != undefined){
+                var params = "userId=" + userId + "&gr_id=" + userToId + "&images=" + images +"&text=" + messageVal+"&is_group="+1+"&gr_users="+grUsers;
+            }else {
+                var params = "userId=" + userId + "&userToId=" + userToId + "&images=" + images + "&text=" + messageVal+"&is_group="+0;
+            }
+            query = checkQuery(query, "images", query.match(/&images/g), query.match(/images/g), queryObj.images)
         }
+
+        // check area
+        query = checkQuery(query, "userId", query.match(/&userId/g), query.match(/userId/g), queryObj.userId)
+        query = checkQuery(query, "userToId", query.match(/&userToId/g), query.match(/userToId/g), queryObj.userToId)
+        query = checkQuery(query, "text", query.match(/&text/g), query.match(/text/g), queryObj.text)
+        // check area
+        
+        let queryRequest = query.length == 0 ? '' + params : query + '&' + params; 
+
+        window.history.replaceState({}, '', '/?' + queryRequest)
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/send/chat', true);
+        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
+
+        xhr.onload = function(){
+            if(this.status == 200){
+                if(this.responseText == 'error'){
+                    document.getElementById('send-input').value = '';
+                }
+
+                document.querySelector('.for-pic').innerHTML = '';
+                if(queryObj.hasOwnProperty('dark_mode') ){
+                    if( queryObj.dark_mode == 'on' ){
+                        darkMode.click();
+                    }
+                }
+            } else {
+                console.log("Page Not Found")
+            }
+        }
+        xhr.send(queryRequest);
     }
-    xhr.send(queryRequest);
 } 
 
 
@@ -349,6 +426,79 @@ function onChange(e){
 
 // Delete SMS
 
+for(const deleteBtn of document.querySelectorAll('.delete-sms-gr')){
+    deleteBtn.addEventListener('click', deleteGrChat);
+}
+
+function deleteGrChat(e){
+    e.preventDefault();
+    var currentTime = this.parentElement.querySelector('.chat-time span').textContent
+    var currentId = this.parentElement.getAttribute("data-id"); 
+    var grId = document.querySelector('.header-chat img').getAttribute('data-id')
+    var query = window.location.search.substr(1);
+    var queryObj = parseQuery(query);
+    $.ajax({
+        type: "GET",
+        dataType: 'text',  // <-- what to expect back from the PHP script, if anything
+        cache: false,
+        contentType: false,
+        processData: false,
+        url: '/delete/grChat',
+        data: 'user_id='+currentId+"&time="+currentTime+"&gr_id="+grId,
+        success: function(data)
+        {
+            var data = JSON.parse(data);
+            var output = '';
+            console.log(data);
+            for(const i in data[0]){
+                if( data[1] == data[0][i].user_id ){
+                    output += '<div class="chat-me">'+
+                                    '<div class="chat-cart">'+
+                                        '<div class="chat-text" data-id="'+data[0][i].user_id+'">'+
+                                            '<a href="/delete/grChat" class="delete-sms-gr"><img src="/template/images/delete-sms.svg"></a>'+
+                                            '<div class="images-chat">'+ data[0][i].image +'</div>'+
+                                            '<p>' + data[0][i].sms + '</p>'+
+                                            '<div class="chat-time">'+
+                                                '<span>' + (data[0][i].time) + '</span>'+
+                                            '</div>'+
+                                            '<div class="chat-arr"></div>'+
+                                        '</div>'+
+                                        '<img src="/upload/' + data[0][i].uimage + '" alt="">'+
+                                    '</div>'+
+                                '</div>';
+                } else {
+                    output += '<div class="chat-to">'+
+                                    '<div class="chat-cart">'+
+                                        '<div class="chat-text" data-id="'+data[0][i].user_id+'">'+
+                                            '<div class="images-chat">'+ data[0][i].image +'</div>'+
+                                            '<p>' + data[0][i].sms + '</p>'+
+                                            '<div class="chat-time">'+
+                                                '<span>' + (data[0][i].time) + '</span>'+
+                                            '</div>'+
+                                            '<div class="chat-arr"></div>'+
+                                        '</div>'+
+                                        '<img src="/upload/' + data[0][i].uimage + '" alt="">'+
+                                    '</div>'+
+                                '</div>';
+                }
+            
+            }
+
+            document.querySelector('.chat-content').innerHTML = output;
+            
+            for(const deleteBtn of document.querySelectorAll('.delete-sms-gr')){
+                deleteBtn.addEventListener('click', deleteGrChat);
+            }
+
+            if(queryObj.hasOwnProperty('dark_mode') ){
+                if( queryObj.dark_mode == 'on' ){
+                    darkMode.click();
+                }
+            }
+        }
+    });
+}
+
 function deleteChat(e){
 	e.preventDefault();
     var currentTime = this.parentElement.querySelector('.chat-time span').textContent
@@ -356,8 +506,8 @@ function deleteChat(e){
     var toId = document.querySelector('.header-chat img').getAttribute('data-id')
     var query = window.location.search.substr(1);
     var queryObj = parseQuery(query);
-    
-	var params = "sms_id=" + currentId + "&time=" + currentTime + "&toId=" + toId;
+
+    var params = "sms_id=" + currentId + "&time=" + currentTime + "&toId=" + toId;
 
 	var xhr = new XMLHttpRequest();
 	xhr.open('GET', '/delete/chat?'+params, true);
@@ -367,7 +517,6 @@ function deleteChat(e){
 		if(this.status == 200){
 			var result = JSON.parse(this.responseText);
             var output = '';
-            console.log(result);
             for(const i in result[1]){
                 if( currentId == result[1][i].user_id ){
                     output += '<div class="chat-me">'+
@@ -403,23 +552,7 @@ function deleteChat(e){
             document.querySelector('.chat-content').innerHTML = output;
             if(queryObj.hasOwnProperty('dark_mode') ){
                 if( queryObj.dark_mode == 'on' ){
-                    for(const text of document.querySelectorAll('.chat-me .chat-text'))
-                    { text.style.background = '#38385c' }
-                    for(const text of document.querySelectorAll('.chat-me .chat-arr'))
-                    { text.style.background = '#38385c' }
-                    for(const text of document.querySelectorAll('.chat-to .chat-text'))
-                    { text.style.background = '#202c44' }
-                    for(const text of document.querySelectorAll('.chat-to .chat-arr'))
-                    { text.style.background = '#202c44' }
-                } else {
-                    for(const text of document.querySelectorAll('.chat-me .chat-text'))
-                    { text.style.background = '#eee' }
-                    for(const text of document.querySelectorAll('.chat-me .chat-arr'))
-                    { text.style.background = '#eee' }
-                    for(const text of document.querySelectorAll('.chat-to .chat-text'))
-                    { text.style.background = '#e9effb' }
-                    for(const text of document.querySelectorAll('.chat-to .chat-arr'))
-                    { text.style.background = '#e9effb' }
+                    darkMode.click();
                 }
             }
             for(const deleteBtn of document.querySelectorAll('.delete-sms')){
@@ -437,3 +570,124 @@ function deleteChat(e){
 for(const deleteBtn of document.querySelectorAll('.delete-sms')){
     deleteBtn.addEventListener('click', deleteChat);
 }
+
+// Modal
+
+let createModal = document.querySelector('.modal-group-container');
+let openCreateModal = document.getElementById('group-modal');
+let closeCreateModal = document.querySelector('.modal-header img');
+
+openCreateModal.addEventListener('click', function(){
+    createModal.classList.toggle('active-group-modal');
+})
+
+closeCreateModal.addEventListener('click', function(){
+    createModal.classList.toggle('active-group-modal');
+})
+
+window.addEventListener('click', function(event){
+    if(event.target.classList.contains('modal-main')){
+        closeCreateModal.click()
+    }
+})
+// Modal
+
+// select member
+
+$(document).ready(function(event){
+    // var deleteBtnMember = document.querySelectorAll(".delete-gr-member");
+    $("#grmembers").on('change',function(){
+            var userId = this.value;
+            if( userId != '' ){
+            $.ajax({
+                type: "GET",
+                dataType: 'text',  // <-- what to expect back from the PHP script, if anything
+                cache: false,
+                contentType: false,
+                processData: false,
+                url: '/group/add/member',
+                data: 'user_id='+userId,
+                success: function(data)
+                {
+                    var user = JSON.parse(data);
+                    var output = '';
+                    var isExist = 0;
+                    $('.members-list .member').each(function(index){
+                        if( this.getAttribute("data-id") == user.id ) isExist++;
+                    })
+
+                    if( !isExist ){
+                        output +=   '<div data-id="'+user.id+'" class="member">'+
+                                        '<img src="/upload/'+user.image+'">'+
+                                        '<div>'+
+                                            '<img class="delete-gr-member" src="/template/images/close.svg">'+
+                                            '<p>'+user.name+'</p>'+
+                                            '<span>'+user.phone+'</span>'+
+                                        '</div>'+
+                                    '</div>';
+                        $('.members-list').append(output);
+
+                        var deleteBtnMember = $(".delete-gr-member");
+
+                        if( deleteBtnMember != undefined ) {
+                            deleteBtnMember.each(function(index){
+                                this.addEventListener('click', function(event){
+                                    var prElem = this.parentElement.parentElement;
+                                    prElem.remove();
+                                })
+                            })
+                        }
+                    }
+                }
+            });
+        }
+    })
+    
+})
+// select member
+
+// Create Group
+
+$(document).ready(function(){
+    $("#create-group-submit").on('click', function(event){
+        // event.preventDefault();
+        var file_image = $('#grpic').prop('files')[0];   
+        var file_name = document.querySelector('#grname').value;   
+        var form_data = new FormData();                  
+        form_data.append('file', file_image);
+        form_data.append('name', file_name);
+        var users = [];
+
+        for(const mem of document.querySelectorAll('.member')){
+            users.push(mem.getAttribute('data-id'))
+        }
+        users.push(this.getAttribute('data-id'))
+        form_data.append('users', users);
+
+        if( users.length != 0 ){
+            $.ajax(
+            {
+                type: "POST",
+                dataType: 'text',  // <-- what to expect back from the PHP script, if anything
+                cache: false,
+                contentType: false,
+                processData: false,
+                url: '/group/create',
+                data: form_data,
+                success: function(info)
+                {
+                    var result = JSON.parse(info);
+                    if( result == 'error' ){
+                        alert('Rasm 4 MB dan katta bo\'lmasligi kerak!');
+                    }
+                    if( result == 'success' ){
+                        file_name.innerHTML = '';
+                        closeCreateModal.click()
+                    }
+                }
+            });
+        }
+    })
+})
+
+// Create Group

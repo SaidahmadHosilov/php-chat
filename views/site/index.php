@@ -2,6 +2,44 @@
 <?php require_once( ROOT . '/views/layouts/header.php' ); ?>
 <!-- !Header -->
 
+    <div class="modal-group-container">
+        <div class="modal-main">
+            <div class="modal-in">
+                <div class="modal-header">
+                    <img src="/template/images/close.svg">
+                </div>
+                <div class="modal-body">
+                    <h1>Create Group</h1>
+                    <form action="" method="POST">
+                        <label for="grname">Name: </label>
+                        <input type="text" name="name" id="grname">
+                        <label for="grpic" class="add-img-group">Picture: 
+                            <img src="/template/images/add-image.svg" alt="">
+                        </label>
+                        <input type="file" accept="png, jpg, jpeg, svg" name="grpic" id="grpic">
+                        <label for="grmembers">Add Member:</label>
+                        <select name="grmembers" id="grmembers">
+                            <option value="">...</option>
+                            <?php 
+                                foreach($allUsers as $us): 
+                                    if( $us['id'] != $_SESSION['user'] ):
+                            ?>
+                                    <option value="<?=$us['id']?>"><?=$us['name']?></option>
+                            <?php
+                                    endif; 
+                                endforeach; 
+                            ?>
+                        </select>
+                        <div class="members-list">
+
+                        </div>
+                        <button type="submit" data-id="<?=$_SESSION['user']?>" name="submit" id="create-group-submit">Create</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <img src="/template/images/close.svg" class="close-menu">
         <img src="/template/images/hamburger-menu.svg" class="hamburger-menu">
@@ -16,20 +54,44 @@
             </form>
             <div class="people" id="people-list-box">
                 <ul>
-                    <?php foreach( $users as $person ): ?>
-                        <li>
-                            <a class="select-chat-user" 
-                            data-userToId="<?=$person['id']?>" data-userId="<?=$_SESSION['user']?>">
-                                <div class="person-box">
-                                    <img src="/upload/<?=$person['image']?>" alt="">
-                                    <div class="per-info">
-                                        <div class="name"><?=$person['name']?></div>
-                                        <div class="status"> <div class="online-class"></div> online</div>
-                                    </div>
-                                </div>
-                            </a>
-                        </li>
-                    <?php endforeach; ?>
+                    <?php 
+                        foreach( $result as $item ): 
+                            if(!array_key_exists('admin', $item)):
+                    ?>
+                                <li>
+                                    <a class="select-chat-user" 
+                                    data-userToId="<?=$item['id']?>" data-userId="<?=$_SESSION['user']?>">
+                                        <div class="person-box">
+                                            <img src="/upload/<?=$item['image']?>" alt="">
+                                            <div class="per-info">
+                                                <div class="name"><?=$item['name']?></div>
+                                                <div class="status"> <div class="online-class"></div> online</div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </li>
+                    <?php 
+                        else: 
+                            if( in_array($_SESSION['user'], $item['users']) ):
+                    ?>
+                                    <li>
+                                        <a class="select-group-chat" 
+                                        data-grId="<?=$item['id']?>" data-userId="<?=$_SESSION['user']?>">
+                                            <img src="/template/images/group.svg">
+                                            <div class="person-box">
+                                                <img src="/upload/<?=$item['image']?>" alt="">
+                                                <div class="per-info">
+                                                    <div class="name"><?=$item['name']?></div>
+                                                    <div class="status"> <?=count($item['users'])?> people </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                    <?php
+                            endif;
+                        endif; 
+                    endforeach; 
+                ?>
                 </ul>
             </div>
         </div>
@@ -47,6 +109,11 @@
                     <a>
                         <img class="light-mode" src="/template/images/sun.svg">
                         <img class="dark-mode" src="/template/images/moon.svg">
+                    </a>
+                    <a id="group-modal">
+                        <acronym title="Create Group">
+                            <img src="/template/images/add-group.svg">
+                        </acronym>
                     </a>
                     <a href="/profile/edit/<?=$_SESSION['user']?>">
                         <acronym title="Edit Profile">
@@ -116,6 +183,106 @@
     });
 
     var channel = pusher.subscribe('demo_pusher');
+
+    channel.bind('group-chat-content', function(data) {
+        var groupInfo = data['message'].current_group; // Saidahmad
+        var allSMS = data['message'].all_sms;   // SMS user_id = S, user_to_id = K
+        var userId = data['message'].user_id;   
+        var grUsers = (data['message'].gr_users).split(',');   
+        var output = '';
+        var output2 = '';
+        var query = document.location.search.substr(1);
+        var queryObj = parseQuery(query);
+
+        if( userId == <?=$_SESSION['user']?> ){
+            for(let i = 0; i < grUsers.length; i++){
+                if( grUsers[i] == userId ) grUsers.splice(i, 1)
+            }
+            output = '';
+            for( const sms of allSMS ){
+                if( <?=$_SESSION['user']?> == sms.user_id ){
+                    output += '<div class="chat-me">'+
+                                    '<div class="chat-cart">'+
+                                        '<div class="chat-text" data-id="'+sms.user_id+'">'+
+                                            '<a href="/delete/grChat" class="delete-sms-gr"><img src="/template/images/delete-sms.svg"></a>'+
+                                            '<div class="images-chat">'+ sms.image +'</div>'+
+                                            '<p>' + sms.sms + '</p>'+
+                                            '<div class="chat-time">'+
+                                                '<span>' + sms.time + '</span>'+
+                                            '</div>'+
+                                            '<div class="chat-arr"></div>'+
+                                        '</div>'+
+                                        '<img src="/upload/'+ sms.uimage +'" alt="">'+
+                                    '</div>'+
+                                '</div>';
+                } else {
+                    output += '<div class="chat-to">'+
+                                    '<div class="chat-cart">'+
+                                        '<div class="chat-text" data-id="'+sms.user_id+'">'+
+                                            '<div class="images-chat">'+ sms.image +'</div>'+
+                                            '<p>' + sms.sms + '</p>'+
+                                            '<div class="chat-time">'+
+                                                '<span>' + sms.time + '</span>'+
+                                            '</div>'+
+                                            '<div class="chat-arr"></div>'+
+                                        '</div>'+
+                                        '<img src="/upload/'+ sms.uimage +'" alt="">'+
+                                    '</div>'+
+                                '</div>';
+                }
+            }
+            $('#chat-content').html(output);
+            $('#send-input').val("");
+        } else if(grUsers.includes((<?=$_SESSION['user']?>).toString())){
+            var checkInGroup = document.querySelector('.header-chat img').getAttribute('data-name');
+            var checkInGroupId = document.querySelector('.header-chat img').getAttribute('data-id');
+            if( checkInGroup == 'group' && groupInfo.id == checkInGroupId ){
+                output = '';
+                for( const sms of allSMS ){
+                    if( <?=$_SESSION['user']?> == sms.user_id ){
+                        output += '<div class="chat-me">'+
+                                        '<div class="chat-cart">'+
+                                            '<div class="chat-text" data-id="'+sms.user_id+'">'+
+                                                '<a href="/delete/grChat" class="delete-sms-gr"><img src="/template/images/delete-sms.svg"></a>'+
+                                                '<div class="images-chat">'+ sms.image +'</div>'+
+                                                '<p>' + sms.sms + '</p>'+
+                                                '<div class="chat-time">'+
+                                                    '<span>' + sms.time + '</span>'+
+                                                '</div>'+
+                                                '<div class="chat-arr"></div>'+
+                                            '</div>'+
+                                            '<img src="/upload/'+ sms.uimage +'" alt="">'+
+                                        '</div>'+
+                                    '</div>';
+                    } else {
+                        output += '<div class="chat-to">'+
+                                        '<div class="chat-cart">'+
+                                            '<div class="chat-text" data-id="'+sms.user_id+'">'+
+                                                '<div class="images-chat">'+ sms.image +'</div>'+
+                                                '<p>' + sms.sms + '</p>'+
+                                                '<div class="chat-time">'+
+                                                    '<span>' + sms.time + '</span>'+
+                                                '</div>'+
+                                                '<div class="chat-arr"></div>'+
+                                            '</div>'+
+                                            '<img src="/upload/'+ sms.uimage +'" alt="">'+
+                                        '</div>'+
+                                    '</div>';
+                    }
+                }
+                $('#chat-content').html(output);
+            }
+        }
+
+        for(const deleteBtn of document.querySelectorAll('.delete-sms-gr')){
+            deleteBtn.addEventListener('click', deleteGrChat);
+        }
+        if(queryObj.hasOwnProperty('dark_mode') ){
+            if( queryObj.dark_mode == 'on' ){
+                document.querySelector('.dark-mode').click();
+            } 
+        }
+    });
 
     channel.bind('chat-content', function(data) {
         var userInfo = data['message'].current_user; // Saidahmad
@@ -231,6 +398,9 @@
                 }
         }
     });
+    for(const deleteBtn of document.querySelectorAll('.delete-sms')){
+        deleteBtn.addEventListener('click', deleteChat);
+    }
 </script> 
 <script src="/template/app.js"></script>
 <script>

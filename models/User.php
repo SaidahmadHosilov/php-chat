@@ -39,8 +39,11 @@ class User
     public static function deleteChat($id, $time)
     {
         $db = Db::getConnection();
-        $sql = "DELETE FROM sms WHERE user_id = $id AND time = '$time'";
-        $db->query($sql);
+        $sql = "DELETE FROM sms WHERE user_id = :id AND time = :time";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->bindParam(':time', $time, PDO::PARAM_STR);
+        $stmt->execute();
         return true;
     }
 
@@ -57,8 +60,10 @@ class User
     public static function getUserImage($userId)
     {
         $db = Db::getConnection();
-        $sql = "SELECT * FROM users WHERE id = $userId";
-        $result = $db->query($sql);
+        $sql = "SELECT * FROM users WHERE id = :id";
+        $result = $db->prepare($sql);
+        $result->bindParam(':id', $userId, PDO::PARAM_INT);
+        $result->execute();
         $result->setFetchMode(PDO::FETCH_ASSOC);
 
         return $result->fetch();
@@ -86,15 +91,18 @@ class User
         $arr = [];
         if( $userId == $userToId ){
             $sql = "SELECT * FROM sms 
-                WHERE user_id = $userId AND user_to_id = $userToId ORDER BY time DESC";
+                WHERE user_id = :userId AND user_to_id = :userToId ORDER BY time DESC";
         } else {
-            $sql = "SELECT * FROM sms WHERE user_id = $userId AND user_to_id = $userToId
+            $sql = "SELECT * FROM sms WHERE user_id = :userId AND user_to_id = :userToId
                 UNION ALL 
-                SELECT * FROM sms WHERE user_id = $userToId AND user_to_id = $userId 
+                SELECT * FROM sms WHERE user_id = :userToId AND user_to_id = :userId 
                 ORDER BY time DESC";
         }
         
-        $result = $db->query($sql);
+        $result = $db->prepare($sql);
+        $result->bindParam(':userId', $userId, PDO::PARAM_INT);
+        $result->bindParam(':userToId', $userToId, PDO::PARAM_INT);
+        $result->execute();
         $result->setFetchMode(PDO::FETCH_ASSOC);
         $arr = [];
         $i = 0;
@@ -116,8 +124,10 @@ class User
     public static function getUserToInfo($user_to_id)
     {
         $db = Db::getConnection();
-        $sql = "SELECT * FROM users WHERE id = $user_to_id";
-        $result = $db->query($sql);
+        $sql = "SELECT * FROM users WHERE id = :id";
+        $result = $db->prepare($sql);
+        $result->bindParam(':id', $user_to_id, PDO::PARAM_INT);
+        $result->execute();
         $result->setFetchMode(PDO::FETCH_ASSOC);
         
         return $result->fetch();
@@ -133,6 +143,15 @@ class User
             return true;
         }
 
+    }
+
+    public static function getAllUsers()
+    {
+        $db = Db::getConnection();
+        $sql = "SELECT * FROM users";
+        $stmt = $db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
 
     public static function getUsers()
@@ -258,7 +277,9 @@ class User
     {
         $db = Db::getConnection();
 
-        $sql = $db->query("SELECT * FROM users WHERE id = $id");
+        $sql = $db->prepare("SELECT * FROM users WHERE id = :id");
+        $sql->bindParam(':id', $id, PDO::PARAM_INT);
+        $sql->execute();
         $sql->setFetchMode(PDO::FETCH_ASSOC);
         $result = $sql->fetch();
         
